@@ -1,4 +1,4 @@
-;(function (_undefined) {
+;(function (exports) {
 
     function Trie (prefix) {
         // Prefix records our position in the larger trie datastructure
@@ -99,37 +99,47 @@
         return result;
     }
 
+    function setupTabCompletion (input, suggestions, usevalue) {
+
+        suggestions.empty().hide();
+
+        var root = new Trie();
+
+        input.keydown(function (e) {
+            if (e.which === 9) {
+                suggestions.empty().hide();
+                var trie = root.find(e.target.value);
+                if (trie) {
+                    e.target.value = trie.uniquePrefix();
+                    var choices = trie.choices();
+                    if (choices.length > 0) {
+                        suggestions.toggle();
+                        _.each(choices, function (w) { $('#suggestions').append($('<p>').text(w)); });
+                    }
+                }
+                e.preventDefault();
+            } else if (e.which === 13) {
+                $(this).blur();
+                e.preventDefault();
+            }
+        }).blur(function (e) {
+            suggestions.empty().hide();
+            usevalue(e.target.value);
+        });
+
+        return {
+            words: function (words) { root.words(words); },
+            word: function (word) { root.word(word); },
+        }
+    }
+
     $(document).ready(function () {
 
-        $('#suggestions').empty().hide();
-
         var words = ['abcfoo', 'abcfoobar', 'abcbar', 'abcfood', 'abcbaz', 'abcbarth', 'abcquux', 'abc'];
-
-        var root = new Trie().words(words);
-
-        $('#to_complete')
-            .keydown(function (e) {
-                if (e.which === 9) {
-                    $('#suggestions').empty().hide();
-                    var trie = root.find(e.target.value);
-                    if (trie) {
-                        e.target.value = trie.uniquePrefix();
-                        var choices = trie.choices();
-                        if (choices.length > 0) {
-                            $('#suggestions').toggle();
-                            _.each(choices, function (w) { $('#suggestions').append($('<p>').text(w)); });
-                        }
-                    }
-                    e.preventDefault();
-                } else if (e.which === 13) {
-                    $('#log').append($('<p>').text('change: ' + e.target.value));
-                    $('#suggestions').empty().hide();
-                    e.preventDefault();
-                }
-            })
-            .blur(function (e) {
-                $('#log').append($('<p>').text('blur: ' + e.target.value));
-            });
+        var completer = setupTabCompletion($('#to_complete'), $('#suggestions'), function (v) {
+            $('#log').append($('<p>').text('value: ' + v));
+        })
+        completer.words(words);
 
     });
-}());
+}(window));

@@ -1,7 +1,7 @@
 ;(function (_undefined) {
 
-
     function Trie (prefix) {
+        // Prefix records our position in the larger trie datastructure
         this.prefix = _.isUndefined(prefix) ? '' : prefix;
 
         // Keys are the first characters of the children and values
@@ -101,33 +101,35 @@
 
     $(document).ready(function () {
 
+        $('#suggestions').empty().hide();
+
         var words = ['abcfoo', 'abcfoobar', 'abcbar', 'abcfood', 'abcbaz', 'abcbarth', 'abcquux', 'abc'];
 
         var root = new Trie().words(words);
 
-        var back = root.choices();
-
-        console.log('words: ' + words.join(', ') + ' (' + words.length + ')');
-        console.log('back: ' + back.join(', ') + ' (' + back.length + ')');
-        console.log('prefix: ' + root.uniquePrefix());
-        console.log('prefix with abcf: ' + root.find('abcf').uniquePrefix());
-        console.log('abcf choices: ' + root.find('abcf').choices().join(', '));
-
-
         $('#to_complete')
             .keydown(function (e) {
                 if (e.which === 9) {
+                    $('#suggestions').empty().hide();
                     var trie = root.find(e.target.value);
                     if (trie) {
                         e.target.value = trie.uniquePrefix();
-                        $('#suggestions').empty();
-                        _.each(trie.choices(), function (w) { $('#suggestions').append($('<p>').text(w)); });
+                        var choices = trie.choices();
+                        if (choices.length > 0) {
+                            $('#suggestions').toggle();
+                            _.each(choices, function (w) { $('#suggestions').append($('<p>').text(w)); });
+                        }
                     }
+                    e.preventDefault();
+                } else if (e.which === 13) {
+                    $('#log').append($('<p>').text('change: ' + e.target.value));
+                    $('#suggestions').empty().hide();
                     e.preventDefault();
                 }
             })
-            .change(function (e) {
-                $('#log').append($('<p>').text('change: ' + e.target.value));
+            .blur(function (e) {
+                $('#log').append($('<p>').text('blur: ' + e.target.value));
             });
+
     });
 }());
